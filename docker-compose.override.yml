@@ -1,0 +1,10 @@
+services:
+  database:
+    environment:
+        POSTGRES_DB: "BlogDb"
+        POSTGRES_USER: "User"
+        POSTGRES_PASSWORD: "Password"
+    ports:
+        - 5432:5432
+
+      
