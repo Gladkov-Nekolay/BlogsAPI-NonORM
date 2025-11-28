@@ -48,13 +48,14 @@ public abstract class GenericRepository<T>(IDbConnectionFactory connectionFactor
         var values = MapRequestValuesFromEntity(entity);
 
         var columnsNames = string.Join(", ", values.Keys.Select(key => $"\"{key.FieldName}\""));
+        var columnsValuesAliases = string.Join(", ", values.Keys.Select(key => $"@{key.FieldName}"));
 
-        var columnsValues = string.Join(", ", values.Values.Select(value => $"'{value}'"));
-        // переделать под переменные
-        var sql = $"""INSERT INTO "{tableName}" ({columnsNames}) VALUES ({columnsValues})""";
+        var sql = $"""INSERT INTO "{tableName}" ({columnsNames}) VALUES ({columnsValuesAliases})""";
 
         using var connection = await connectionFactory.CreateConnectionAsync();
         using var command = new NpgsqlCommand(sql, connection);
+
+        ApplyParametersValues(values, command);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -114,18 +115,24 @@ public abstract class GenericRepository<T>(IDbConnectionFactory connectionFactor
 
         using var connection = await connectionFactory.CreateConnectionAsync();
         using var command = new NpgsqlCommand(sql, connection);
-        
-        command.Parameters.AddWithValue("id", entity.Id);
 
+        command.Parameters.AddWithValue("id", entity.Id);
+        ApplyParametersValues(propertiesWithValues, command);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private void ApplyParametersValues(
+        IDictionary<(string FieldName, NpgsqlDbType FieldType), string> propertiesWithValues,
+        NpgsqlCommand command)
+    {
         foreach (var value in propertiesWithValues)
         {
             command.Parameters.AddWithValue(
-                value.Key.FieldName, 
-                value.Key.FieldType, 
+                value.Key.FieldName,
+                value.Key.FieldType,
                 ConvertValueToDbType(value.Value, value.Key.FieldType)
             );
         }
-
-        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }
