@@ -13,19 +13,27 @@ public abstract class GenericRepository<T>(IDbConnectionFactory connectionFactor
     protected readonly IDbConnectionFactory ConnectionFactory = connectionFactory;
 
     /// <summary>
-    /// 
+    /// Метод обеспечивает маппинг из Readera(данных sql) в объект определенного класса
     /// </summary>
     /// <param name="reader"></param>
     /// <returns></returns>
     protected abstract T MapResultToEntity(DbDataReader reader);
  
     /// <summary>
-    /// 
+    /// Метод обеспечивает маппинг данных из объкта определенного класса в словарь, в котором:
+    /// Ключем выступает кортеж из имя колонки в талице и ее тип данных
+    /// Значением выступает значение которое хотим сохранить в БД
     /// </summary>
     /// <param name="entity"></param>
     /// <returns></returns>
     protected abstract IDictionary<(string FieldName, NpgsqlDbType FieldType), string> MapRequestValuesFromEntity(T entity);
 
+    /// <summary>
+    /// Метод для решения проблемы инициализации ячейки типа Uuid строковым значением
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="type"></param>
+    /// <returns></returns>
     protected object ConvertValueToDbType(string value, NpgsqlDbType type)
     {
         return type switch
