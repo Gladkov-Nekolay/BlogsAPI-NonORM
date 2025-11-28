@@ -1,6 +1,8 @@
 ﻿using Blogs.Service.Entities;
+using Blogs.Service.Helpers;
 using Blogs.Service.Models.RequestModels;
 using Blogs.Service.RepositoryInterfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace Blogs.Service.ServiceCore;
 
@@ -28,6 +30,7 @@ public class UserService(IUserRepository userRepository, IJwtService jwtService)
 
     public async Task<string> LoginAsync(LoginUserModel loginUserModel, CancellationToken cancellationToken)
     {
+        loginUserModel.Password = PasswordHelper.GetPasswordHesh(loginUserModel.Password);
         var user = await userRepository.CheckUserCredentialsAsync(loginUserModel, cancellationToken);
 
         if (user == null) { throw new KeyNotFoundException("Login or password is incorrect"); }
@@ -40,7 +43,7 @@ public class UserService(IUserRepository userRepository, IJwtService jwtService)
         var user = new User() 
         {
             Login = createUserModel.Login,
-            Password = createUserModel.Password,
+            Password = PasswordHelper.GetPasswordHesh(createUserModel.Password),
             Name = createUserModel.Name,
         };
 
